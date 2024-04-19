@@ -29,7 +29,7 @@ const Components = ({ width, onGifClick }) => {
 
 export function GiphyModal({ onGifClick }) {
     return <div className='tool-modal-extra'>
-        <SearchContextManager apiKey={process.env["GIPHY_API_KEY"]!}>
+        <SearchContextManager apiKey={import.meta.env["VITE_GIPHY_API_KEY"]!}>
             <Components width={640} onGifClick={onGifClick} />
         </SearchContextManager>
     </div>;

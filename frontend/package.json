@@ -17,11 +17,15 @@
     "@web3-storage/w3up-client": "^12.5.0",
     "alchemy-sdk": "^3.2.1",
     "connectkit": "^1.7.3",
+    "dotenv": "^16.4.5",
+    "ethers": "^6.11.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-grid-gallery": "^1.0.1-alpha.0",
+    "react-router-dom": "^6.22.3",
     "tldraw": "^2.0.2",
     "viem": "^2.9.12",
+    "w3name": "^1.0.8",
     "wagmi": "^2.5.19"
   },
   "devDependencies": {
