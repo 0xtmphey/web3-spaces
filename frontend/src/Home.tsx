@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { ConnectKitButton } from 'connectkit'
 import { useAccount } from 'wagmi'
 import { ConnectPublicClient, ConnectWalletClient } from './onchain/client'
@@ -49,6 +49,26 @@ function MintButton() {
 
     const { address } = useAccount()
     const [minting, setMinting] = useState(false)
+
+    useEffect(() => {
+        const publicClient = ConnectPublicClient()
+        console.log('Trying to watch contract events...')
+        return publicClient.watchContractEvent({
+            address: contractAddress,
+            abi: spacesAbi,
+            eventName: 'Transfer',
+            onLogs: (logs: any) => {
+                console.log(logs)
+                setMinting(false)
+                window.location.href = `/token/${logs[0].args.tokenId}`
+            },
+            onError: (error: any) => {
+                console.log(error)
+                setMinting(false)
+                alert(error.message)
+            },
+        })
+    }, [])
 
     const handleClick = async () => {
         setMinting(true)

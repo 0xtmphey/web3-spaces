@@ -34,7 +34,7 @@ export function ConnectPublicClient() {
     // Delcare a Public Client
     const publicClient = createPublicClient({
         chain: arbitrumSepolia,
-        transport: transport,
+        transport: http(),
     });
 
     return publicClient;

@@ -79,3 +79,15 @@ export async function updateRevisionFor(
         }))
     })
 }
+
+export async function updateTokenIdFor(
+    tokenId,
+    minter
+) {
+    return new Promise((resolve, reject) => {
+        db.run('update records set token_id = ? where minter = ? AND token_id = null', [tokenId, minter], ((err) => {
+            if (err) reject(err)
+            else resolve()
+        }))
+    })
+}

@@ -1,6 +1,6 @@
 import { filesFromPaths } from 'files-from-path'
 import { createPublicClient, http, getContract } from 'viem'
-import { mainnet } from 'viem/chains'
+import { arbitrumSepolia, mainnet } from 'viem/chains'
 import {
     create as createName,
     publish as publishName,
@@ -14,7 +14,7 @@ import * as db from './db.js'
 import { abi, contractAddress } from './onchain/contract.js'
 
 export const publicClient = createPublicClient({
-    chain: mainnet,
+    chain: arbitrumSepolia,
     transport: http()
 })
 
@@ -52,7 +52,22 @@ async function onMintSuccess(
     tokenId,
     minterAddress
 ) {
+    return db.updateTokenIdFor(tokenId, minterAddress)
+}
 
+export function listenForMintSuccess() {
+    publicClient.watchContractEvent({
+        address: contractAddress,
+        abi: abi,
+        poll: true,
+        eventName: 'Transfer',
+        onLogs: (logs) => {
+            let tokenId = BigInt(logs[0].args.tokenId)
+            let minterAddress = logs[0].args.to
+            onMintSuccess(tokenId, minterAddress)
+        },
+        onError: (error) => { console.log(error) },
+    })
 }
 
 /**
