@@ -7,6 +7,8 @@ import { ConnectKitButton } from "connectkit"
 import { ConnectWalletClient, ConnectPublicClient } from "./onchain/client"
 import { useAccount } from "wagmi"
 import { updateSpaceData } from "./api"
+import { GiphyModal } from "./gifs/GiphyModal"
+import { NftModal } from "./nfts/NftModal"
 
 interface SpaceProps {
     editable: boolean
@@ -64,6 +66,8 @@ function Spaces(props: SpaceProps) {
     })
     const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.VIEW_AS_OWNER)
     const [editor, setEditor] = useState<Editor>()
+    const [showGM, setShowGM] = useState(false)
+    const [showNM, setShowNM] = useState(false)
 
     const { id: tokenId } = useParams()
     const { address } = useAccount()
@@ -137,6 +141,35 @@ function Spaces(props: SpaceProps) {
         }
     }
 
+    const overrides = useCallback((): TLUiOverrides => {
+        return {
+            tools(editor, tools) {
+                tools.gif = {
+                    id: 'gif',
+                    icon: 'tool-gif',
+                    label: 'Giphy',
+                    onSelect: () => {
+                        setShowGM(!showGM)
+                    },
+                }
+                tools.nft = {
+                    id: 'nft',
+                    icon: 'tool-nft',
+                    label: 'Nfts',
+                    onSelect: () => {
+                        setShowNM(!showNM)
+                    },
+                }
+                return tools
+            },
+            toolbar(_app, toolbar, { tools }) {
+                toolbar.splice(4, 0, toolbarItem(tools.gif))
+                toolbar.splice(5, 0, toolbarItem(tools.nft))
+                return toolbar
+            },
+        }
+    }, [showGM, showNM])
+
     return (
         <div style={{ width: '100%', flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
             <div className='header'>
@@ -154,13 +187,16 @@ function Spaces(props: SpaceProps) {
                         'tool-nft': '/tool.nft.svg',
                     }
                 }}
-                overrides={overrides}
+                overrides={overrides()}
                 components={editable ? componentsEdit : componentsView}
                 onMount={(editor) => {
                     setEditor(editor)
                     editor.updateInstanceState({ isReadonly: !editable })
                 }}
-            />
+            >
+                {showGM && <GiphyModal closeSelf={() => setShowGM(false)} />}
+                {showNM && <NftModal closeSelf={() => setShowNM(false)} />}
+            </Tldraw>
         </div>
     )
 }

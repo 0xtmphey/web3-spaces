@@ -6,6 +6,8 @@ import {
     SuggestionBar, // an optional UI component that displays trending searches and channel / username results
 } from '@giphy/react-components'
 import React, { useContext } from 'react'
+import { useEditor } from "tldraw"
+import { postGif } from './postGif'
 
 
 // define the components in a separate function so we can
@@ -22,12 +24,20 @@ const Components = ({ width, onGifClick }) => {
                 width={width}
                 fetchGifs={fetchGifs}
                 onGifClick={onGifClick}
+                noLink={true}
             />
         </>
     )
 }
 
-export function GiphyModal({ onGifClick }) {
+export function GiphyModal({ closeSelf }) {
+    const editor = useEditor()
+
+    const onGifClick = (gif) => {
+        postGif(gif, editor)
+        closeSelf()
+    }
+
     return <div className='tool-modal-extra'>
         <SearchContextManager apiKey={import.meta.env["VITE_GIPHY_API_KEY"]!}>
             <Components width={640} onGifClick={onGifClick} />
