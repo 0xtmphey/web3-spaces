@@ -22,16 +22,6 @@ export function ConnectWalletClient() {
 }
 
 export function ConnectPublicClient() {
-    // Check for window.ethereum
-    let transport;
-    if (window.ethereum) {
-        transport = custom(window.ethereum);
-    } else {
-        const errorMessage = "MetaMask or another web3 wallet is not installed. Please install one to proceed.";
-        throw new Error(errorMessage);
-    }
-
-    // Delcare a Public Client
     const publicClient = createPublicClient({
         chain: arbitrumSepolia,
         transport: http(),

@@ -48,23 +48,17 @@ export async function prepareMint(
     return name.toString()
 }
 
-async function onMintSuccess(
-    tokenId,
-    minterAddress
-) {
-    return db.updateTokenIdFor(tokenId, minterAddress)
-}
-
 export function listenForMintSuccess() {
     publicClient.watchContractEvent({
         address: contractAddress,
         abi: abi,
         poll: true,
         eventName: 'Transfer',
-        onLogs: (logs) => {
+        onLogs: async (logs) => {
             let tokenId = BigInt(logs[0].args.tokenId)
             let minterAddress = logs[0].args.to
-            onMintSuccess(tokenId, minterAddress)
+            await db.updateTokenIdFor(tokenId, minterAddress)
+            console.log(`Updated token ${tokenId} to ${minterAddress}`)
         },
         onError: (error) => { console.log(error) },
     })

@@ -1,6 +1,6 @@
 const BASE_URL: string = import.meta.env["VITE_BACKEND_HOST"]!
 
-interface PrepareMintParams {
+interface SignatureParams {
     message: string,
     signature: string,
     address: string
@@ -16,7 +16,7 @@ interface PrepareMintParams {
  * @returns The NFT URI.
  */
 export async function prepareMint(
-    params: PrepareMintParams
+    params: SignatureParams
 ): Promise<string> {
     const { message, signature, address } = params
     const url = `${BASE_URL}/prepare`
@@ -34,7 +34,7 @@ export async function prepareMint(
     return await response.json()
 }
 
-export async function updateSpaceData(signData: any, spaceData: any, tokenId: string): Promise<void> {
+export async function updateSpaceData(signData: SignatureParams, spaceData: any, tokenId: string): Promise<void> {
     const url = `${BASE_URL}/update/${tokenId}`
     const body = {
         signature: signData,

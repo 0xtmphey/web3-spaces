@@ -4,6 +4,9 @@ import { Editor, TLComponents, TLStoreWithStatus, TLUiOverrides, Tldraw, createT
 import 'tldraw/tldraw.css'
 import { getRemoteSnapshot } from "./getRemoteSnapshot"
 import { ConnectKitButton } from "connectkit"
+import { ConnectWalletClient, ConnectPublicClient } from "./onchain/client"
+import { useAccount } from "wagmi"
+import { updateSpaceData } from "./api"
 
 interface SpaceProps {
     editable: boolean
@@ -62,7 +65,8 @@ function Spaces(props: SpaceProps) {
     const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.VIEW_AS_OWNER)
     const [editor, setEditor] = useState<Editor>()
 
-    const { id } = useParams()
+    const { id: tokenId } = useParams()
+    const { address } = useAccount()
     const editable = (viewMode === ViewMode.EDIT)
 
     useEffect(() => {
@@ -72,7 +76,7 @@ function Spaces(props: SpaceProps) {
     useEffect(() => {
         let cancelled = false
         async function loadSnapshot() {
-            const snapshot = await getRemoteSnapshot(id!)
+            const snapshot = await getRemoteSnapshot(tokenId!)
             console.log('loaded snapshot', snapshot)
             if (cancelled) return
 
@@ -80,7 +84,7 @@ function Spaces(props: SpaceProps) {
                 shapeUtils: defaultShapeUtils
             })
 
-            // newStore.loadSnapshot(snapshot)
+            newStore.loadSnapshot(snapshot)
 
             console.log(JSON.stringify(newStore.getSnapshot()))
 
@@ -101,13 +105,45 @@ function Spaces(props: SpaceProps) {
     const setEditMode = () => {
         setViewMode(ViewMode.EDIT)
     }
+
+    const save = async () => {
+        const walletClient = ConnectWalletClient()
+        const publicClient = ConnectPublicClient()
+
+        try {
+            const signature = await walletClient.signMessage({
+                message: MSG_TO_SIGN,
+                account: address!,
+            })
+
+            const snapshot = storeWithStatus.store?.getSnapshot()
+            if (!snapshot) throw new Error('Failed to get snapshot')
+
+            console.log(snapshot)
+
+            await updateSpaceData(
+                {
+                    signature,
+                    message: MSG_TO_SIGN,
+                    address: address!
+                },
+                snapshot,
+                tokenId!
+            )
+
+            setViewMode(ViewMode.VIEW_AS_OWNER)
+        } catch (e) {
+            console.log(e)
+        }
+    }
+
     return (
         <div style={{ width: '100%', flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
             <div className='header'>
                 <Link to='/'>Web3 Spaces</Link>
                 <div className='spacer' />
                 {viewMode === ViewMode.VIEW_AS_OWNER && <button onClick={() => setEditMode()}>Edit</button>}
-                {viewMode === ViewMode.EDIT && <button onClick={() => setViewMode(ViewMode.VIEW_AS_OWNER)}>Save</button>}
+                {viewMode === ViewMode.EDIT && <button onClick={() => save()}>Save</button>}
                 <ConnectKitButton />
             </div>
             <Tldraw
@@ -128,5 +164,7 @@ function Spaces(props: SpaceProps) {
         </div>
     )
 }
+
+const MSG_TO_SIGN = 'Please sign this message to save your changes'
 
 export const Space = React.memo(Spaces)

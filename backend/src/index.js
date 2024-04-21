@@ -3,7 +3,7 @@ import 'dotenv/config'
 import express from 'express'
 import bodyParser from 'body-parser'
 import { getStorageClient } from './storage.js'
-import { prepareMint, updateSpace } from './api.js'
+import { listenForMintSuccess, prepareMint, updateSpace } from './api.js'
 import cors from 'cors'
 
 const app = express()
@@ -41,5 +41,5 @@ app.post('/update/:id', async (req, res, err) => {
         })
     }
 })
-
+listenForMintSuccess()
 app.listen(3000)
