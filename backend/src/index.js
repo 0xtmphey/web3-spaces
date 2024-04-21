@@ -8,7 +8,7 @@ import cors from 'cors'
 
 const app = express()
 
-app.use(bodyParser.json())
+app.use(bodyParser.json({ limit: '50mb' }))
 app.use(cors())
 
 app.post('/prepare', async (req, res, err) => {

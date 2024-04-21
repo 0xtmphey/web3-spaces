@@ -7,6 +7,7 @@ import { getContract } from 'viem'
 import { prepareMint } from './api'
 import Loader from './components/Loader'
 import { Link } from 'react-router-dom'
+import CircularProgress from '@mui/material/CircularProgress'
 
 export function Home() {
 
@@ -78,10 +79,10 @@ function MintButton() {
 
     const handleClick = async () => {
         setMinting(true)
-        const walletClient = ConnectWalletClient()
-        const publicClient = ConnectPublicClient()
-
         try {
+            const walletClient = ConnectWalletClient()
+            const publicClient = ConnectPublicClient()
+
             const signature = await walletClient.signMessage({
                 message: MSG_TO_SIGN,
                 account: address!,
@@ -109,7 +110,7 @@ function MintButton() {
     }
 
     return <button onClick={handleClick}>
-        {minting ? <Loader /> : 'Mint'}
+        {minting ? <CircularProgress /> : 'Mint'}
     </button>
 }
 

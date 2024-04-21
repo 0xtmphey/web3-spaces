@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react"
-import { Link, useParams } from "react-router-dom"
+import { Link, useParams, useSearchParams } from "react-router-dom"
 import { Editor, TLComponents, TLStoreWithStatus, TLUiOverrides, Tldraw, createTLStore, defaultShapeUtils, toolbarItem, useEditor } from "tldraw"
 import 'tldraw/tldraw.css'
 import { getRemoteSnapshot } from "./getRemoteSnapshot"
@@ -9,13 +9,15 @@ import { useAccount } from "wagmi"
 import { updateSpaceData } from "./api"
 import { GiphyModal } from "./gifs/GiphyModal"
 import { NftModal } from "./nfts/NftModal"
+import { getContract } from "viem"
+import { contractAddress, spacesAbi } from "./onchain/spacesApi"
+import { postImage } from "./nfts/postNft"
 
 interface SpaceProps {
     editable: boolean
 }
 
 enum ViewMode {
-    VIEW_AS_OWNER = 'VIEW_AS_OWNER',
     VIEW = 'VIEW',
     EDIT = 'EDIT',
 }
@@ -64,7 +66,7 @@ function Spaces(props: SpaceProps) {
     const [storeWithStatus, setStoreWithStatus] = useState<TLStoreWithStatus>({
         status: 'loading'
     })
-    const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.VIEW_AS_OWNER)
+    const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.VIEW)
     const [editor, setEditor] = useState<Editor>()
     const [showGM, setShowGM] = useState(false)
     const [showNM, setShowNM] = useState(false)
@@ -74,8 +76,9 @@ function Spaces(props: SpaceProps) {
     const editable = (viewMode === ViewMode.EDIT)
 
     useEffect(() => {
-        editor?.updateInstanceState({ isReadonly: !editable })
-    }, [editable])
+        console.log("Updating editor: canEdit: ", editable)
+        editor?.updateInstanceState({ isReadonly: viewMode !== ViewMode.EDIT })
+    }, [viewMode, editor])
 
     useEffect(() => {
         let cancelled = false
@@ -90,8 +93,6 @@ function Spaces(props: SpaceProps) {
 
             newStore.loadSnapshot(snapshot)
 
-            console.log(JSON.stringify(newStore.getSnapshot()))
-
             setStoreWithStatus({
                 store: newStore,
                 status: 'synced-remote',
@@ -102,7 +103,7 @@ function Spaces(props: SpaceProps) {
         loadSnapshot()
 
         return () => {
-            cancelled = false
+            cancelled = true
         }
     }, [])
 
@@ -112,7 +113,6 @@ function Spaces(props: SpaceProps) {
 
     const save = async () => {
         const walletClient = ConnectWalletClient()
-        const publicClient = ConnectPublicClient()
 
         try {
             const signature = await walletClient.signMessage({
@@ -122,8 +122,6 @@ function Spaces(props: SpaceProps) {
 
             const snapshot = storeWithStatus.store?.getSnapshot()
             if (!snapshot) throw new Error('Failed to get snapshot')
-
-            console.log(snapshot)
 
             await updateSpaceData(
                 {
@@ -135,7 +133,7 @@ function Spaces(props: SpaceProps) {
                 tokenId!
             )
 
-            setViewMode(ViewMode.VIEW_AS_OWNER)
+            setViewMode(ViewMode.VIEW)
         } catch (e) {
             console.log(e)
         }
@@ -170,13 +168,24 @@ function Spaces(props: SpaceProps) {
         }
     }, [showGM, showNM])
 
+    const handleMount = useCallback((editor: Editor) => {
+        setEditor(editor)
+
+        editor.registerExternalContentHandler('url', ({ url }) => {
+            if (url.endsWith('.png') || url.endsWith('.jpg') || url.endsWith('.jpeg') || url.includes('imgur.com')) {
+                postImage(url, url, editor).catch(console.log)
+            }
+        })
+    }, [])
+
     return (
         <div style={{ width: '100%', flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
             <div className='header'>
                 <Link to='/'>Web3 Spaces</Link>
                 <div className='spacer' />
-                {viewMode === ViewMode.VIEW_AS_OWNER && <button onClick={() => setEditMode()}>Edit</button>}
+                {(viewMode === ViewMode.VIEW) && <button onClick={() => setEditMode()}>Edit</button>}
                 {viewMode === ViewMode.EDIT && <button onClick={() => save()}>Save</button>}
+                <div style={{ width: '20px' }}></div>
                 <ConnectKitButton />
             </div>
             <Tldraw
@@ -189,10 +198,7 @@ function Spaces(props: SpaceProps) {
                 }}
                 overrides={overrides()}
                 components={editable ? componentsEdit : componentsView}
-                onMount={(editor) => {
-                    setEditor(editor)
-                    editor.updateInstanceState({ isReadonly: !editable })
-                }}
+                onMount={handleMount}
             >
                 {showGM && <GiphyModal closeSelf={() => setShowGM(false)} />}
                 {showNM && <NftModal closeSelf={() => setShowNM(false)} />}

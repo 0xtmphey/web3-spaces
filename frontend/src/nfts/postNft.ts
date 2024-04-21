@@ -3,7 +3,6 @@ import { AssetRecordType, Editor } from "tldraw"
 
 export function postNft(nft: OwnedNft, editor: Editor | null) {
     if (!editor) return
-    const assetId = AssetRecordType.createId()
     const img = nft.image
 
     if (!img.cachedUrl) {
@@ -11,7 +10,14 @@ export function postNft(nft: OwnedNft, editor: Editor | null) {
         return
     }
 
-    getMeta(img.cachedUrl)
+    return postImage(img.cachedUrl, nft.tokenId, editor)
+}
+
+export async function postImage(url: string, name: string, editor: Editor | null) {
+    if (!editor) return
+    const assetId = AssetRecordType.createId(url)
+
+    getMeta(url)
         .then(img => {
             const imageWidth = img.naturalWidth / 4
             const imageHeight = img.naturalHeight / 4
@@ -22,11 +28,11 @@ export function postNft(nft: OwnedNft, editor: Editor | null) {
                     type: 'image',
                     typeName: 'asset',
                     props: {
-                        name: nft.tokenId,
-                        src: nft.image.cachedUrl!,
+                        name: name,
+                        src: url,
                         w: imageWidth,
                         h: imageHeight,
-                        mimeType: nft.image.contentType || "image/*",
+                        mimeType: "image/*",
                         isAnimated: true,
                     },
                     meta: {},
