@@ -1,11 +1,18 @@
-import React, { useEffect, useState } from "react"
-import { useParams } from "react-router-dom"
-import { TLComponents, TLStoreWithStatus, TLUiOverrides, Tldraw, createTLStore, defaultShapeUtils, toolbarItem, useEditor } from "tldraw"
+import React, { useCallback, useEffect, useState } from "react"
+import { Link, useParams } from "react-router-dom"
+import { Editor, TLComponents, TLStoreWithStatus, TLUiOverrides, Tldraw, createTLStore, defaultShapeUtils, toolbarItem, useEditor } from "tldraw"
 import 'tldraw/tldraw.css'
 import { getRemoteSnapshot } from "./getRemoteSnapshot"
+import { ConnectKitButton } from "connectkit"
 
 interface SpaceProps {
     editable: boolean
+}
+
+enum ViewMode {
+    VIEW_AS_OWNER = 'VIEW_AS_OWNER',
+    VIEW = 'VIEW',
+    EDIT = 'EDIT',
 }
 
 const componentsEdit: TLComponents = {
@@ -27,7 +34,6 @@ const overrides: TLUiOverrides = {
             icon: 'tool-gif',
             label: 'Giphy',
             onSelect: () => {
-
             },
         }
         tools.nft = {
@@ -53,8 +59,15 @@ function Spaces(props: SpaceProps) {
     const [storeWithStatus, setStoreWithStatus] = useState<TLStoreWithStatus>({
         status: 'loading'
     })
+    const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.VIEW_AS_OWNER)
+    const [editor, setEditor] = useState<Editor>()
 
     const { id } = useParams()
+    const editable = (viewMode === ViewMode.EDIT)
+
+    useEffect(() => {
+        editor?.updateInstanceState({ isReadonly: !editable })
+    }, [editable])
 
     useEffect(() => {
         let cancelled = false
@@ -85,8 +98,18 @@ function Spaces(props: SpaceProps) {
         }
     }, [])
 
+    const setEditMode = () => {
+        setViewMode(ViewMode.EDIT)
+    }
     return (
-        <div style={{ width: '100%', flex: 1, overflow: 'hidden' }}>
+        <div style={{ width: '100%', flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+            <div className='header'>
+                <Link to='/'>Web3 Spaces</Link>
+                <div className='spacer' />
+                {viewMode === ViewMode.VIEW_AS_OWNER && <button onClick={() => setEditMode()}>Edit</button>}
+                {viewMode === ViewMode.EDIT && <button onClick={() => setViewMode(ViewMode.VIEW_AS_OWNER)}>Save</button>}
+                <ConnectKitButton />
+            </div>
             <Tldraw
                 store={storeWithStatus}
                 assetUrls={{
@@ -96,9 +119,10 @@ function Spaces(props: SpaceProps) {
                     }
                 }}
                 overrides={overrides}
-                components={props.editable ? componentsEdit : componentsView}
+                components={editable ? componentsEdit : componentsView}
                 onMount={(editor) => {
-                    editor.updateInstanceState({ isReadonly: !props.editable })
+                    setEditor(editor)
+                    editor.updateInstanceState({ isReadonly: !editable })
                 }}
             />
         </div>

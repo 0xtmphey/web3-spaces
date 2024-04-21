@@ -26,11 +26,6 @@ function App() {
 function Layout() {
   return (
     <div className='app'>
-      <div className='header'>
-        <Link to='/'>Web3 Spaces</Link>
-        <div className='spacer' />
-        <ConnectKitButton />
-      </div>
       <Outlet />
     </div>
   );

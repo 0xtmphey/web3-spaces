@@ -6,6 +6,7 @@ import { spacesAbi, contractAddress } from './onchain/spacesApi'
 import { getContract } from 'viem'
 import { prepareMint } from './api'
 import Loader from './components/Loader'
+import { Link } from 'react-router-dom'
 
 export function Home() {
 
@@ -16,6 +17,11 @@ export function Home() {
         flexDirection: 'column',
         height: '100%'
     }}>
+        <div className='header'>
+            <Link to='/'>Web3 Spaces</Link>
+            <div className='spacer' />
+            <ConnectKitButton />
+        </div>
         <h1>Welcome to Web3 Spaces</h1>
         <h3>Your personal corner of the Internet</h3>
         <div style={{ height: '40px' }}></div>
