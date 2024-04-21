@@ -86,9 +86,17 @@ export async function updateTokenIdFor(
 ) {
     console.log("Token: " + tokenId + " Minter: " + minter)
     return new Promise((resolve, reject) => {
-        db.run('update records set token_id = ? where minter = ? AND token_id is null', [tokenId, minter], ((err) => {
-            if (err) reject(err)
-            else resolve()
-        }))
+        db.get('select id from records where minter = ? and token_id is null limit 1', [minter], (err, row) => {
+            console.log(row)
+            if (err) {
+                reject(err)
+
+            } else {
+                db.run('update records set token_id = ? where id = ?', [tokenId, row.ID], ((err) => {
+                    if (err) reject(err)
+                    else resolve()
+                }))
+            }
+        })
     })
 }

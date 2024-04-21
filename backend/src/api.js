@@ -57,7 +57,7 @@ export function listenForMintSuccess() {
         onLogs: async (logs) => {
             let tokenId = BigInt(logs[0].args.tokenId)
             let minterAddress = logs[0].args.to
-            await db.updateTokenIdFor(tokenId, minterAddress)
+            await db.updateTokenIdFor(tokenId.toString(), minterAddress)
             console.log(`Updated token ${tokenId} to ${minterAddress}`)
         },
         onError: (error) => { console.log(error) },
